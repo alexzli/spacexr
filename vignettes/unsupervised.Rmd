@@ -1,0 +1,103 @@
+---
+title: "Unsupervised Learning on Spatial Transcriptomics Data"
+author: "Alex Li"
+date: "July 25th, 2022"
+output:  
+  html_document:
+    keep_md: yes
+  rmarkdown::html_vignette:
+    keep_md: yes
+vignette: >
+  %\VignetteIndexEntry{unsupervised}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r setup}
+library(spacexr)
+library(Matrix)
+```
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  cache = TRUE,
+  out.width = "100%"
+)
+```
+
+## Introduction
+
+Reference-free Inference of Cell types and Expression, or RICE, is an unsupervised statistical method for learning cell types and gene expression profiles from spatial transcriptomics data. In this vignette, we will assign cell types to a cerebellum Slide-seq dataset without the use of an outside reference. 
+
+## Data Preproessing
+
+We begin by loading the spatial transcriptomics data into a ```SpatialRNA``` object. More details about this process is located on our vignette on [applying RCTD to a spatial transcriptomics dataset][id].
+
+[id]: https://raw.githack.com/dmcable/spacexr/master/vignettes/spatial-transcriptomics.html
+
+```{r preprocess}
+datadir <- system.file("extdata",'SpatialRNA/Vignette',package = 'spacexr') # directory for sample Slide-seq dataset
+counts <- read.csv(file.path(datadir,"MappedDGEForR.csv")) # load in counts matrix
+coords <- read.csv(file.path(datadir,"BeadLocationsForR.csv"))
+rownames(counts) <- counts[,1]; counts[,1] <- NULL # Move first column to rownames
+rownames(coords) <- coords$barcodes; coords$barcodes <- NULL # Move barcodes to rownames
+nUMI <- colSums(counts) # In this case, total counts per pixel is nUMI
+
+### Create SpatialRNA object
+puck <- SpatialRNA(coords, counts, nUMI)
+```
+
+## Creating RCTD Object
+
+Like all other methods in spacexr, we begin by creating an ```RCTD``` object. Since no reference is required, we use the ```create.RCTD.noref``` function, which instead requires a gene-expression profile initialization in the form of a ```cell_type_info``` list object used in RCTD. While this can be random or pre-computed, we provide the ```initialize.clusters``` function that computes the initialization from Seurat clustering on the spatial dataset and is what we recommend. This function returns a ```cell_type_info``` list that can be directly passed into ```create.RCTD.noref```. Most other configuration options are the same as for the ```create.RCTD``` function.
+
+```{r create}
+cell_type_info <- initialize.clusters(puck, resolution = 1.2)
+myRCTD <- create.RCTD.noref(puck, cell_type_info, max_cores = 4)
+```
+
+## Running RICE
+
+We can now run RICE with the ```run.RICE``` function, which is equivalent to sequentially running the functions ```choose_sigma_c``` and ```iterOptim```. Note that unlike RCTD, we do not need to run ```fitBulk``` since this approach is reference-free. RICE currently supports running in 'doublet mode' and 'full mode', but not 'multi mode'. 
+```{r run}
+RCTDlist <- run.RICE(myRCTD, doublet_mode = 'doublet')
+```
+
+## RICE Results
+
+By default, ```run.RICE``` returns a list of RCTD objects for each iteration. The last object in the lists stores the cell type results in ```@results```, and the cell type-specific gene expression profiles can be found in ```@cell_type_info$info```. As an overview, we will generate several plots produced in our RCTD vignette.
+
+```{r results}
+myRCTD <- RCTDlist[[length(RCTDlist)]]
+results <- myRCTD@results
+norm_weights = normalize_weights(results$weights) 
+cell_type_names <- myRCTD@cell_type_info$info[[2]] #list of cell type names
+spatialRNA <- myRCTD@spatialRNA
+resultsdir <- 'RCTD_Plots' ## you may change this to a more accessible directory on your computer.
+dir.create(resultsdir)
+```
+```{r plots}
+# make the plots 
+# Plots the confident weights for each cell type as in full_mode (saved as 
+# 'results/cell_type_weights_unthreshold.pdf')
+plot_weights(cell_type_names, spatialRNA, resultsdir, norm_weights) 
+# Plots all weights for each cell type as in full_mode. (saved as 
+# 'results/cell_type_weights.pdf')
+plot_weights_unthreshold(cell_type_names, spatialRNA, resultsdir, norm_weights) 
+# Plots the weights for each cell type as in doublet_mode. (saved as 
+# 'results/cell_type_weights_doublets.pdf')
+plot_weights_doublet(cell_type_names, spatialRNA, resultsdir, results$weights_doublet, 
+                     results$results_df) 
+# Plots the number of confident pixels of each cell type in 'full_mode'. (saved as 
+# 'results/cell_type_occur.pdf')
+plot_cond_occur(cell_type_names, resultsdir, norm_weights, spatialRNA)
+# makes a map of all cell types, (saved as 
+# 'results/all_cell_types.pdf')
+plot_all_cell_types(results$results_df, spatialRNA@coords, cell_type_names, resultsdir) 
+```
+
+## Running RICE Subtypes
+
+RICE can also be used for the unsupervised assignment of cell subtypes. 

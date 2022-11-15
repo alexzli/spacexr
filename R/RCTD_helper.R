@@ -118,8 +118,7 @@ process_bead_doublet <- function(cell_type_info, gene_list, UMI_tot, bead, solut
   if(!type1_pres$all_pairs_class && !type2_pres$all_pairs_class) {
     spot_class <- "reject"
     singlet_score = min_score + 2 * doublet_like_cutoff #arbitrary
-  }
-  else if(type1_pres$all_pairs_class && !type2_pres$all_pairs_class) {
+  } else if(type1_pres$all_pairs_class && !type2_pres$all_pairs_class) {
     first_class <- !type1_pres$all_pairs
     singlet_score = type1_pres$singlet_score
     spot_class = "doublet_uncertain"
