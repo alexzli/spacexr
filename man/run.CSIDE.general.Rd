@@ -9,8 +9,7 @@ run.CSIDE.general(
   X1,
   X2,
   barcodes,
-  cell_types,
-  gene_list_tot = NULL,
+  cell_types = NULL,
   gene_threshold = 5e-05,
   cell_type_threshold = 125,
   doublet_mode = T,
@@ -45,8 +44,6 @@ explaining differential expression and need to be linearly independent.}
 
 \item{cell_types}{the cell types used for CSIDE. If null, cell types will be chosen with aggregate occurences of
 at least `cell_type_threshold`, as aggregated by \code{\link{aggregate_cell_types}}}
-
-\item{gene_list_tot}{(default NULL) list of genes for DE. If NULL, selects genes using `gene_threshold`.}
 
 \item{gene_threshold}{(default 5e-5) minimum average normalized expression required for selecting genes}
 

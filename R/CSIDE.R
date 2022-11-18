@@ -198,7 +198,7 @@ run.CSIDE.regions <- function(myRCTD, region_list, cell_types = NULL,
 #' in addition `sig_gene_list`, a list, for each cell type, of significant genes detected by CSIDE.
 #' Additionally, the object contains `internal_vars_de` a list of variables that are used internally by CSIDE
 #' @export
-run.CSIDE <- function(myRCTD, X, barcodes, cell_types, gene_threshold = 5e-5, cell_type_threshold = 125,
+run.CSIDE <- function(myRCTD, X, barcodes, cell_types = NULL, gene_threshold = 5e-5, cell_type_threshold = 125,
                           doublet_mode = T, test_mode = 'individual', weight_threshold = NULL,
                           sigma_gene = T, PRECISION.THRESHOLD = 0.01, cell_types_present = NULL,
                           test_genes_sig = T, fdr = .01, cell_type_specific = NULL,
@@ -266,15 +266,22 @@ run.CSIDE <- function(myRCTD, X, barcodes, cell_types, gene_threshold = 5e-5, ce
 #' `all_gene_list` is the analogous list for all genes (including nonsignificant).
 #' Additionally, the object contains `internal_vars_de` a list of variables that are used internally by CSIDE
 #' @export
-run.CSIDE.general <- function(myRCTD, X1, X2, barcodes, cell_types, gene_threshold = 5e-5, cell_type_threshold = 125,
+run.CSIDE.general <- function(myRCTD, X1, X2, barcodes, cell_types = NULL, gene_threshold = 5e-5, cell_type_threshold = 125,
                           doublet_mode = T, test_mode = 'individual', weight_threshold = NULL,
                           sigma_gene = T, PRECISION.THRESHOLD = 0.01, cell_types_present = NULL,
                           test_genes_sig = T, fdr = .01, params_to_test = NULL, normalize_expr = F,
                           logs=F, cell_type_filter = NULL, log_fc_thresh = 0.4, test_error = FALSE, initialSol = NULL) {
+  if(gene_threshold == .01 || fdr == 0.25 || cell_type_threshold == 10 ||
+     (!is.null(weight_threshold) && weight_threshold == 0.1))
+    warning('run.CSIDE.general: some parameters are set to the CSIDE vignette values, which are intended for testing but not proper execution. For more accurate results, consider using the default parameters to this function.')
   if(doublet_mode && myRCTD@config$RCTDmode != 'doublet')
     stop('run.CSIDE.general: attempted to run CSIDE in doublet mode, but RCTD was not run in doublet mode. Please run CSIDE in full mode (doublet_mode = F) or run RCTD in doublet mode.')
   if(!any("cell_types_assigned" %in% names(myRCTD@internal_vars)) || !myRCTD@internal_vars$cell_types_assigned)
     stop('run.CSIDE.general: cannot run CSIDE unless cell types have been assigned. If cell types have been assigned, you may run "myRCTD <- set_cell_types_assigned(myRCTD)".')
+  if((myRCTD@config$doublet_mode != 'multi') && (length(setdiff(barcodes,rownames(myRCTD@results$weights))) > 0)) {
+    warning('run.CSIDE.general: some elements of barcodes do not appear in myRCTD object (myRCTD@results$weights), but they are required to be a subset. Downsampling barcodes to the intersection of the two sets.')
+    barcodes <- intersect(barcodes,rownames(myRCTD@results$weights))
+  }
   cell_types <- choose_cell_types(myRCTD, barcodes, doublet_mode, cell_type_threshold, cell_types)
   if(!is.null(cell_type_filter)) {
     ct_remove <- setdiff(cell_types, names(which(cell_type_filter)))
@@ -284,13 +291,15 @@ run.CSIDE.general <- function(myRCTD, X1, X2, barcodes, cell_types, gene_thresho
     cell_types <- intersect(cell_types, names(which(cell_type_filter)))
   }
   message(paste0("run.CSIDE.general: running CSIDE with cell types ",paste(cell_types, collapse = ', ')))
+  if(length(cell_types) < 2)
+    stop('run.CSIDE.general: cannot run CSIDE with less than two cell types.')
   X1 <- check_designmatrix(X1, 'run.CSIDE.general')
   X2 <- check_designmatrix(X2, 'run.CSIDE.general', require_2d = TRUE)
   if(!(test_mode %in% c('individual', 'categorical')))
     stop(c('run.CSIDE.general: not valid test_mode = ',test_mode,'. Please set test_mode = "categorical" or "individual".'))
   if(is.null(params_to_test))
     if(test_mode == 'individual')
-      params_to_test <- 2
+      params_to_test <- min(2, dim(X2)[2])
     else
       params_to_test <- 1:dim(X2)[2]
   if(normalize_expr && (test_mode != 'individual' || length(params_to_test) > 1))
@@ -308,14 +317,21 @@ run.CSIDE.general <- function(myRCTD, X1, X2, barcodes, cell_types, gene_thresho
     stop('run.CSIDE.general: some barcodes do not appear in the rownames of X1 or X2.')
   puck = myRCTD@originalSpatialRNA
   gene_list_tot <- filter_genes(puck, threshold = gene_threshold)
+  if(length(gene_list_tot) == 0)
+    stop('run.CSIDE.general: no genes past threshold. Please consider lowering gene_threshold.')
+  if(length(intersect(gene_list_tot,rownames(myRCTD@cell_type_info$info[[1]]))) == 0)
+    stop('run.CSIDE.general: no genes that past threshold were contained in the single cell reference. Please lower gene threshold or ensure that there is agreement between the single cell reference genes and the SpatialRNA genes.')
   nUMI <- puck@nUMI[barcodes]
   cell_type_info <- myRCTD@cell_type_info$info
   if(doublet_mode) {
     my_beta <- get_beta_doublet(barcodes, cell_type_info[[2]], myRCTD@results$results_df, myRCTD@results$weights_doublet)
-    thresh = 0.999
+    thresh <- 0.999
+  } else if(myRCTD@config$doublet_mode == "multi") {
+    my_beta <- get_beta_multi(barcodes, cell_type_info[[2]], myRCTD@results, myRCTD@spatialRNA@coords)
+    thresh <- 0.999
   } else {
     my_beta <- as.matrix(sweep(myRCTD@results$weights, 1, rowSums(myRCTD@results$weights), '/'))
-    thresh = 0.8
+    thresh <- 0.8
   }
   if(!is.null(weight_threshold))
     thresh = weight_threshold
@@ -634,8 +650,8 @@ fit_de_genes <- function(X1,X2,my_beta, nUMI, gene_list, puck, barcodes, sigma_i
     }
     results_list <- foreach::foreach(i = 1:length(gene_list), .packages = c("quadprog", "spacexr"), .export = environ) %dopar% {
       if (logs) {
-        if(i %% 10 == 0) {
-          cat(paste0("Finished sample: ",i," gene ", gene_list[i],"\n"), file=out_file, append=TRUE)
+        if(i %% 1 == 0) { ##10
+          cat(paste0("Testing sample: ",i," gene ", gene_list[i],"\n"), file=out_file, append=TRUE)
         }
       }
       assign("Q_mat",Q_mat, envir = globalenv()); assign("X_vals",X_vals, envir = globalenv())

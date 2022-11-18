@@ -162,8 +162,10 @@ process_bead_multi <- function(cell_type_info, gene_list, UMI_tot, bead, class_d
   conv_all <- results_all$converged
   initial_weight_thresh = 0.01; cell_type_names = cell_type_info[[2]]
   candidates <- names(which(all_weights > initial_weight_thresh))
+  if(length(candidates) == 0)
+    stop('process_bead_multi: no cell types passed weight threshold on full mode. Please check that enough counts are present for each pixel')
   cell_type_list <- c()
-  curr_score <- 1000000
+  curr_score <- 10000000000
   for(n in 1:MAX.TYPES) {
     min_score = curr_score
     best_type = NULL

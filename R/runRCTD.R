@@ -112,7 +112,7 @@ process_beads_multi <- function(cell_type_info, gene_list, puck, class_df = NULL
       assign("Q_mat",Q_mat, envir = globalenv()); assign("X_vals",X_vals, envir = globalenv())
       assign("K_val",K_val, envir = globalenv());
       result = process_bead_multi(cell_type_info, gene_list, puck@nUMI[i], beads[i,],
-                                  class_df = class_df, constrain = constrain, MIN.CHANGE = MIN.CHANGE, MAX.TYPES = MAX.TYPES, 
+                                  class_df = class_df, constrain = constrain, MIN.CHANGE = MIN.CHANGE, MAX.TYPES = MAX.TYPES,
                                   CONFIDENCE_THRESHOLD = CONFIDENCE_THRESHOLD, DOUBLET_THRESHOLD = DOUBLET_THRESHOLD)
       result
     }
@@ -123,7 +123,7 @@ process_beads_multi <- function(cell_type_info, gene_list, puck, class_df = NULL
     for(i in 1:(dim(beads)[1])) {
       results[[i]] <- process_bead_multi(cell_type_info, gene_list, puck@nUMI[i],
                                          beads[i,], class_df = class_df,
-                                         constrain = constrain, MIN.CHANGE = MIN.CHANGE, MAX.TYPES = MAX.TYPES, 
+                                         constrain = constrain, MIN.CHANGE = MIN.CHANGE, MAX.TYPES = MAX.TYPES,
                                          CONFIDENCE_THRESHOLD = CONFIDENCE_THRESHOLD, DOUBLET_THRESHOLD = DOUBLET_THRESHOLD)
     }
   }
@@ -162,7 +162,8 @@ fitPixels <- function(RCTD, doublet_mode = "doublet", initialSol = NULL) {
     return(RCTD)
   } else if(doublet_mode == "multi") {
     RCTD@results = process_beads_multi(cell_type_info, RCTD@internal_vars$gene_list_reg, RCTD@spatialRNA, class_df = RCTD@internal_vars$class_df,
-                                  constrain = F, MAX_CORES = RCTD@config$max_cores, MIN.CHANGE = RCTD@config$MIN_CHANGE_REG, MAX.TYPES = RCTD@config$MAX_MULTI_TYPES, 
+                                  constrain = F, MAX_CORES = RCTD@config$max_cores,
+                                  MIN.CHANGE = RCTD@config$MIN_CHANGE_REG, MAX.TYPES = RCTD@config$MAX_MULTI_TYPES,
                                   CONFIDENCE_THRESHOLD = RCTD@config$CONFIDENCE_THRESHOLD, DOUBLET_THRESHOLD = RCTD@config$DOUBLET_THRESHOLD)
     return(RCTD)
   } else if(doublet_mode == "subtype") {

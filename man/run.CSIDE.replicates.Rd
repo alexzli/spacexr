@@ -6,7 +6,8 @@
 \usage{
 run.CSIDE.replicates(
   RCTD.replicates,
-  explanatory.variable.replicates,
+  explanatory.variable.replicates = NULL,
+  X.replicates = NULL,
   cell_types,
   cell_type_threshold = 125,
   gene_threshold = 5e-05,
@@ -19,18 +20,25 @@ run.CSIDE.replicates(
   population_de = T,
   replicate_index = NULL,
   normalize_expr = F,
+  test_genes_sig_individual = F,
   de_mode = "single",
   df = 15,
   barcodes = NULL,
   log_fc_thresh = 0.4,
-  test_error = T
+  test_error = F,
+  params_to_test = NULL,
+  test_mode = "individual"
 )
 }
 \arguments{
 \item{RCTD.replicates}{an \code{\linkS4class{RCTD.replicates}} object with annotated cell types e.g. from the \code{\link{run.RCTD.replicates}} function.}
 
-\item{explanatory.variable.replicates}{a list of the named numeric vectors representing for each replicate the explanatory variable used for explaining differential expression in CSIDE.
+\item{explanatory.variable.replicates}{(only used for de_mode = single) a list of the named numeric vectors representing for each replicate the explanatory variable used for explaining differential expression in CSIDE.
 Names of the vectors are the \code{\linkS4class{SpatialRNA}} pixel names, and values should be standardized between 0 and 1.}
+
+\item{X.replicates}{(only used for de_mode = general) a list for each replicate of matrices containing the covariates for running CSIDE. The rownames represent pixel names and
+should be a subset of the pixels in the \code{\linkS4class{SpatialRNA}} object. The columns each represent a covariate for
+explaining differential expression and need to be linearly independent.}
 
 \item{cell_types}{the cell types used for CSIDE. Each cell type must occur
 at least `cell_type_threshold`, as aggregated by \code{\link{aggregate_cell_types}}}
@@ -59,7 +67,10 @@ to consider for gene expression contamination during the step filtering out mark
 
 \item{normalize_expr}{(default FALSE) if TRUE, constrains total gene expression to sum to 1 in each condition.}
 
-\item{de_mode}{(default 'single') if 'single', calls \code{\link{run.CSIDE.single}}. If 'nonparam', calls \code{\link{run.CSIDE.nonparam}}}
+\item{test_genes_sig_individual}{(default FALSE) logical controlling whether on individual samples genes will be tested for significance.}
+
+\item{de_mode}{(default 'single', otherwise 'nonparam' or 'general') if 'single', calls \code{\link{run.CSIDE.single}}.
+If 'nonparam', calls \code{\link{run.CSIDE.nonparam}}. If 'general', calls \code{\link{run.CSIDE}}.}
 
 \item{df}{(default 15) for de_mode = nonparam, the degrees of freedom, or number of basis functions to be used in the model.}
 
@@ -67,8 +78,11 @@ to consider for gene expression contamination during the step filtering out mark
 
 \item{log_fc_thresh}{(default 0.4) the natural log fold change cutoff for differential expression}
 
-\item{test_error}{(default TRUE) if TRUE, first tests for error messages before running CSIDE.
+\item{test_error}{(default FALSE) if TRUE, first tests for error messages before running CSIDE.
 If set to TRUE, this can be used to quickly evaluate if CSIDE will run without error.}
+
+\item{params_to_test:}{(default 2 for test_mode = 'individual', all parameters for test_mode = 'categorical'). An integer vector of parameter
+indices to test. For example c(1,4,5) would test only parameters corresponding to columns 1, 4, and 5 of the design matrix.}
 }
 \value{
 an \code{\linkS4class{RCTD.replicates}} object containing the results of the CSIDE algorithm. See \code{\linkS4class{RCTD.replicates}}
@@ -78,5 +92,5 @@ for documentation on the \code{population_de_results}, \code{population_sig_gene
 Identifies cell type specific differential expression (DE) as a function of the explanatory variable
 for each replicate. The design matrix contains an intercept column and a column of the explanatory variable. Uses maximum
 likelihood estimation to estimate DE and standard errors for each gene and each cell type. Selects
-genes with significant nonzero DE.
+genes with significant nonzero DE. Note: a minimum of three replicates are required for population mode.
 }

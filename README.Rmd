@@ -41,13 +41,15 @@ microenvironment, or cell-to-cell interactions. C-SIDE then identifies, for each
 
 Code for generating the figures of our RCTD paper, Robust decomposition of cell type mixtures in spatial transcriptomics, is located [here](https://github.com/dmcable/spacexr/tree/master/AnalysisPaper). Our *Nature Biotechnology* paper can be found [here](https://www.nature.com/articles/s41587-021-00830-w).
 
-Code for generating the figures of our C-SIDE paper, Cell type-specific differential expression inference in spatial transcriptomics, is located [here](https://github.com/dmcable/spacexr/tree/master/AnalysisCSIDE). Our C-SIDE paper will be available soon. <!--[here](BIORXIV LINK). -->
+Code for generating the figures of our C-SIDE paper, Cell type-specific differential expression inference in spatial transcriptomics, is located [here](https://github.com/dmcable/spacexr/tree/master/AnalysisCSIDE). Our C-SIDE paper is available in *Nature Methods* [here](https://www.nature.com/articles/s41592-022-01575-3).
 
 ## News and Updates
 
-December, 22nd, 2021: We are renaming this package (formerly RCTD) as *spacexr* (Spatial eXpression R package). We are also releasing *spacexr* 2.0, now featuring cell type-specific differential expression. The new algorithm, called C-SIDE, is introduced in our new paper which will be available soon. <!--[here](BIORXIV LINK). --> We are also introducing a feature where RCTD and C-SIDE can be run in batch across multiple experimental replicates.
+September 1st, 2022: Our C-SIDE paper has been published in *Nature Methods* [here](https://www.nature.com/articles/s41592-022-01575-3). We have also written a research briefing about this article in *Nature Methods* [here](https://www.nature.com/articles/s41592-022-01576-2).
 
-March, 18th, 2021: Our RCTD paper has been published in *Nature Biotechnology* [here](https://www.nature.com/articles/s41587-021-00830-w). Also, we have just released a new version of RCTD (version 1.2.0) with a different method to input data (please see `SpatialRNA` and `Reference` constructor functions). Please report any bugs associated with this new update.
+December 22nd, 2021: We are renaming this package (formerly RCTD) as *spacexr* (Spatial eXpression R package). We are also releasing *spacexr* 2.0, now featuring cell type-specific differential expression. The new algorithm, called C-SIDE, is introduced in our new paper which will be available soon. <!--[here](BIORXIV LINK). --> We are also introducing a feature where RCTD and C-SIDE can be run in batch across multiple experimental replicates.
+
+March 18th, 2021: Our RCTD paper has been published in *Nature Biotechnology* [here](https://www.nature.com/articles/s41587-021-00830-w). Also, we have just released a new version of RCTD (version 1.2.0) with a different method to input data (please see `SpatialRNA` and `Reference` constructor functions). Please report any bugs associated with this new update.
 
 ## Installation
 
@@ -121,6 +123,16 @@ Operating systems (version 2.0 spacexr) tested on:
 
 * macOS Big Sur 11.6
 * GNU/Linux (GNU coreutils) 8.22 (version 1.0 spacexr tested)
+
+### Citations
+
+If you use this work for cell type estimation, please cite:
+
+Cable, Dylan M., et al. "Robust decomposition of cell type mixtures in spatial transcriptomics." *Nature Biotechnology* 40.4 (2022): 517-526.
+
+If you use this work for differential expression, please cite:
+
+Cable, Dylan M., et al. "Cell type-specific inference of differential expression in spatial transcriptomics." *Nature methods* 19.9 (2022): 1076-1087.
 
 ### License
 

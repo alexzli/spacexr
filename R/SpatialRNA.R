@@ -17,12 +17,17 @@ fake_coords <- function(counts) {
 #' @export
 read.VisiumSpatialRNA <- function (datadir)
 {
-  coords <- readr::read_csv(file = paste(datadir, "spatial/tissue_positions_list.csv",
-                                         sep = "/"),
-                            col_names = c("barcodes", "in_tissue", "x", "y", "pxl_col_in_fullres", "pxl_row_in_fullres"))
-  coords = tibble::column_to_rownames(coords, var = "barcodes")
+  coords.path <- Sys.glob(paths = file.path(datadir, 'spatial/tissue_positions*'))
+  coords <- readr::read_csv(file = coords.path,
+                            col_names =  ifelse(
+                                           test = basename(coords.path) == "tissue_positions.csv",
+                                           yes = TRUE,
+                                           no = FALSE)
+                            )
+  colnames(coords) <- c("barcodes", "in_tissue", "x", "y", "pxl_col_in_fullres", "pxl_row_in_fullres")
+  coords <- tibble::column_to_rownames(coords, var = "barcodes")
   counts <- Seurat::Read10X_h5(paste0(datadir, "/filtered_feature_bc_matrix.h5"))
-  puck = SpatialRNA(coords[,c('x','y')], counts)
+  puck <- SpatialRNA(coords[,c('x','y')], counts)
   restrict_puck(puck, colnames(puck@counts))
 }
 
@@ -102,7 +107,7 @@ SpatialRNA <- function(coords, counts, nUMI = NULL, use_fake_coords = FALSE, req
   new("SpatialRNA", coords = coords[barcodes,], counts = counts[,barcodes], nUMI = nUMI[barcodes])
 }
 
-check_UMI <- function(nUMI, f_name, require_2d = F, require_int = T) {
+check_UMI <- function(nUMI, f_name, require_2d = F, require_int = T, min_UMI = 0) {
   if(!is.atomic(nUMI))
     stop(paste0(f_name,': nUMI is not an atomic vector. Please format nUMI as an atomic vector.'))
   if(!is.numeric(nUMI))
@@ -120,11 +125,17 @@ check_UMI <- function(nUMI, f_name, require_2d = F, require_int = T) {
       stop(paste0(f_name,': the length of nUMI is 1, indicating only one cell present. Please format nUMI so that the length is greater than 1.'))
     else
       warning(paste0(f_name,': the length of nUMI is 1, indicating only one cell present. If this is unintended, please format nUMI so that the length is greater than 1.'))
+  if(max(nUMI) < min_UMI)
+    stop(paste0(f_name,': nUMI values are all less than min_UMI = ',min_UMI,
+                '. Please reduce the min_UMI parameter or ensure that cells have sufficient UMI counts.'))
+  if(min(nUMI) < min_UMI)
+    warning(paste0(f_name,': some nUMI values are less than min_UMI = ', min_UMI,
+                   ', and these cells will be removed. Optionally, you may lower the min_UMI parameter.'))
 }
 
 check_counts <- function(counts, f_name, require_2d = F, require_int = T) {
-  if(class(counts) != 'dgCMatrix') {
-    if(class(counts) != 'matrix')
+  if(!is(counts, 'dgCMatrix')) {
+    if(!is(counts, 'matrix'))
       tryCatch({
         counts <- as(counts,'matrix')
       }, error = function(e) {
@@ -153,11 +164,15 @@ check_counts <- function(counts, f_name, require_2d = F, require_int = T) {
     stop(paste0(f_name,': rownames(counts) contain duplicated elements. Please ensure gene names are unique'))
   if(any(duplicated(colnames(counts))))
     stop(paste0(f_name,': colnames(counts) contain duplicated elements. Please ensure barcode names are unique'))
+  if(any(is.na(rownames(counts))))
+    stop(paste0(f_name,': rownames(counts) contain NA elements. Please ensure gene names are valid'))
+  if(any(is.na(colnames(counts))))
+    stop(paste0(f_name,': colnames(counts) contain NA elements. Please ensure barcode names are valid'))
   return(counts)
 }
 
 check_coords <- function(coords) {
-  if(class(coords) != 'data.frame') {
+  if(!is(coords, 'data.frame')) {
     tryCatch({
       coords <- as(coords,'data.frame')
     }, error = function(e) {
@@ -184,10 +199,12 @@ check_coords <- function(coords) {
 #' @param gene_list a list of gene names
 #' @param UMI_thresh minimum UMI per pixel
 #' @param UMI_max maximum UMI per pixel
+#' @param counts_thresh minimum counts per pixel (for genes in gene_list)
 #' @return Returns a \code{\linkS4class{SpatialRNA}} with counts filtered based on UMI threshold and gene list
 #' @export
-restrict_counts <- function(puck, gene_list, UMI_thresh = 1, UMI_max = 20000) {
-  keep_loc = (puck@nUMI >= UMI_thresh) & (puck@nUMI <= UMI_max)
+restrict_counts <- function(puck, gene_list, UMI_thresh = 1, UMI_max = 20000, counts_thresh = 1) {
+  counts_tot <- colSums(puck@counts[gene_list,])
+  keep_loc = (puck@nUMI >= UMI_thresh) & (puck@nUMI <= UMI_max) & (counts_tot >= counts_thresh)
   puck@counts = puck@counts[gene_list,keep_loc]
   puck@nUMI = puck@nUMI[keep_loc]
   return(puck)

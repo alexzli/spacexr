@@ -1,8 +1,8 @@
 ---
 output:  
-  pdf_document: default
   html_document:
     keep_md: true
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, cache = T, results = '
 # Comparison of Ordinary Least Squares and RCTD
 
 ```{r libraries}
-library(RCTD)
+library(spacexr)
 library(Matrix)
 library(ggplot2)
 library(ggpubr)
@@ -123,7 +123,7 @@ saveRDS(data,file="../Plotting/Results/ref_confusion.RDS")
 #save(puck_d, iv, results, file = 'Data/SpatialRNA/Puck_Viz/results/gathered_results.RData')
 #loading in that data:
 refdir = '../../Data/Reference/DropVizHC'
-load('../../Data/SpatialRNA/Puck_Viz/results/gathered_results.RData')
+load('../../Data/SpatialRNA/Puck_Viz/results/gathered_results_3.RData')
 results_df <- results$results_df
 metadir <- file.path(paste0('../../','Data/SpatialRNA/Puck_Viz'),"MetaData")
 meta_data <- readRDS(file.path(metadir,"meta_data.RDS"))
