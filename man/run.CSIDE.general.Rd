@@ -9,8 +9,7 @@ run.CSIDE.general(
   X1,
   X2,
   barcodes,
-  cell_types,
-  gene_list_tot = NULL,
+  cell_types = NULL,
   gene_threshold = 5e-05,
   cell_type_threshold = 125,
   doublet_mode = T,
@@ -26,8 +25,7 @@ run.CSIDE.general(
   logs = F,
   cell_type_filter = NULL,
   log_fc_thresh = 0.4,
-  test_error = FALSE,
-  initialSol = NULL
+  test_error = FALSE
 )
 }
 \arguments{

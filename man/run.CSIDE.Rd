@@ -8,8 +8,7 @@ run.CSIDE(
   myRCTD,
   X,
   barcodes,
-  cell_types,
-  gene_list_tot = NULL,
+  cell_types = NULL,
   gene_threshold = 5e-05,
   cell_type_threshold = 125,
   doublet_mode = T,
@@ -26,8 +25,7 @@ run.CSIDE(
   logs = F,
   log_fc_thresh = 0.4,
   cell_type_filter = NULL,
-  test_error = F,
-  initialSol = NULL
+  test_error = F
 )
 }
 \arguments{
