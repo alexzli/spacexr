@@ -24,9 +24,7 @@ create.RCTD(
   keep_reference = F,
   cell_type_profiles = NULL,
   CONFIDENCE_THRESHOLD = 10,
-  DOUBLET_THRESHOLD = 25,
-  gene_list_bulk = NULL,
-  gene_list_reg = NULL
+  DOUBLET_THRESHOLD = 25
 )
 }
 \arguments{

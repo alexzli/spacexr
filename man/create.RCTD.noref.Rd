@@ -2,7 +2,7 @@
 % Please edit documentation in R/RICE.R
 \name{create.RCTD.noref}
 \alias{create.RCTD.noref}
-\title{Creates an \code{\linkS4class{RCTD}} object from a scRNA-seq reference \code{Reference} object and a \code{\linkS4class{SpatialRNA}} object}
+\title{Creates an \code{\linkS4class{RCTD}} object from a \code{\linkS4class{SpatialRNA}} object}
 \usage{
 create.RCTD.noref(
   spatialRNA,
@@ -49,5 +49,5 @@ number of available cores.}
 an \code{\linkS4class{RCTD}} object, which is ready to run the \code{\link{run.RCTD}} function
 }
 \description{
-Creates an \code{\linkS4class{RCTD}} object from a scRNA-seq reference \code{Reference} object and a \code{\linkS4class{SpatialRNA}} object
+Creates an \code{\linkS4class{RCTD}} object from a \code{\linkS4class{SpatialRNA}} object
 }

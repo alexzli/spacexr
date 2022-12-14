@@ -4,7 +4,14 @@
 \alias{run.RICE}
 \title{Runs the unsupervised pipeline on a \code{\linkS4class{RCTD}} object}
 \usage{
-run.RICE(RCTD, doublet_mode = "doublet", n_iter = 50, MIN_CHANGE = 0.001)
+run.RICE(
+  RCTD,
+  doublet_mode = "doublet",
+  cell_types = NULL,
+  n_iter = 50,
+  MIN_CHANGE = 0.001,
+  return_list = F
+)
 }
 \arguments{
 \item{RCTD}{an \code{\linkS4class{RCTD}} object created using the \code{\link{create.RCTD}} function.}

@@ -34,7 +34,6 @@ create.RCTD.noref <- function(spatialRNA, cell_type_info, max_cores = 4, gene_li
   puck = restrict_puck(puck, colnames(puck@counts))
   if(is.null(class_df))
     class_df <- data.frame(cell_type_info$info[[2]], row.names = cell_type_info$info[[2]]); colnames(class_df)[1] = "class"
-  cell_type_info$info[[1]] <- cell_type_info$info[[1]][gene_list, ]
   cell_type_info$renorm[[1]] <- cell_type_info$renorm[[1]][gene_list, ]
   internal_vars <- list(gene_list_reg = gene_list, proportions = NULL, class_df = class_df, cell_types_assigned = F)
   new("RCTD", spatialRNA = puck, originalSpatialRNA = puck.original, reference = reference, config = config, cell_type_info = cell_type_info, internal_vars = internal_vars)
@@ -55,12 +54,20 @@ create.RCTD.noref <- function(spatialRNA, cell_type_info, max_cores = 4, gene_li
 #' @return an \code{\linkS4class{RCTD}} object containing the results of the unsupervised algorithm. Please see \code{\linkS4class{RCTD}}
 #' documentation for more information on interpreting the content of the RCTD object.
 #' @export
-run.RICE <- function(RCTD, doublet_mode = 'doublet', n_iter = 50, MIN_CHANGE = 0.001, return_list = F) {
+run.RICE <- function(RCTD, doublet_mode = 'doublet', cell_types = NULL, n_iter = 50, MIN_CHANGE = 0.001, return_list = F) {
   if (!(doublet_mode %in% c('doublet', 'full')))
     stop(paste0("run.unsupervised: doublet_mode=", doublet_mode, " is not a valid choice. Please set doublet_mode=doublet or full."))
   RCTD@config$RCTDmode <- doublet_mode
+  RCTD@spatialRNA <- restrict_counts(RCTD@spatialRNA, RCTD@internal_vars$gene_list_reg)
+  if (is.null(cell_types)) 
+    cell_types <- RCTD@cell_type_info$info[[2]]
+  RCTD@cell_type_info$renorm <- list(
+    RCTD@cell_type_info$info[[1]][RCTD@internal_vars$gene_list_reg,cell_types], 
+    cell_types, 
+    length(cell_types)
+  )
   RCTD <- choose_sigma_c(RCTD)
-  RCTD <- iterOptim(RCTD, doublet_mode = doublet_mode, n_iter = n_iter, MIN_CHANGE = MIN_CHANGE, return_list = return_list)
+  RCTD <- iterOptim(RCTD, cell_types, doublet_mode = doublet_mode, n_iter = n_iter, MIN_CHANGE = MIN_CHANGE, return_list = return_list)
 }
 
 #' Runs the subtype pipeline on a \code{\linkS4class{RCTD}} object
@@ -80,7 +87,7 @@ run.RICE.subtypes <- function(RCTD, n_iter = 50, MIN_CHANGE = 0.001, return_list
   initialSol <- list(weights = RCTD@results$weights)
   RCTD@config$RCTDmode <- 'subtype'
   RCTD <- choose_sigma_c(RCTD)
-  RCTD <- iterOptim(RCTD, doublet_mode = 'subtype', cell_types = cell_types, n_iter = n_iter, MIN_CHANGE = MIN_CHANGE, initialSol = initialSol, return_list = return_list)
+  RCTD <- iterOptim(RCTD, cell_types, doublet_mode = 'subtype', n_iter = n_iter, MIN_CHANGE = MIN_CHANGE, initialSol = initialSol, return_list = return_list)
 }
 
 
@@ -90,19 +97,17 @@ run.RICE.subtypes <- function(RCTD, n_iter = 50, MIN_CHANGE = 0.001, return_list
 #' on the pixel. If in full mode, can fit any number of cell types on each pixel. If in subtype mode, fits only pixels belonging to given cell type(s).
 #'
 #' @param RCTD an \code{\linkS4class{RCTD}} object after running the \code{\link{choose_sigma_c}} function.
+#' @param cell_types the cell types used for CSIDE.
 #' @param doublet_mode \code{character string}, either "doublet", "subtype", or "full" on which mode to run iterOptim. Please see above description.
-#' @param cell_types the cell types used for CSIDE. If null, all cell types in \code{cell_type_info} will be chosen.
 #' @param n_iter maximum number of optimization iterations
 #' @param MIN_CHANGE minimum change required to terminate optimization
 #' @return an \code{\linkS4class{RCTD}} object containing the results of the unsupervised algorithm.
 #' @export
-iterOptim <- function(RCTD, doublet_mode = 'doublet', cell_types = NULL, n_iter = 50, MIN_CHANGE = 0.001, initialSol = NULL, return_list = F) {
-  if (is.null(cell_types)) 
-    cell_types <- RCTD@cell_type_info$info[[2]]
+iterOptim <- function(RCTD, cell_types, doublet_mode = 'doublet', n_iter = 50, MIN_CHANGE = 0.001, initialSol = NULL, return_list = F) {
   barcodes <- intersect(names(RCTD@spatialRNA@nUMI), colnames(RCTD@spatialRNA@counts))
   X <- as.matrix(rep(1, length(barcodes)))
   rownames(X) <- barcodes
-  RCTD@de_results$gene_fits$mean_val <- as.matrix(log(RCTD@cell_type_info$info[[1]]))
+  RCTD@de_results$gene_fits$mean_val <- as.matrix(log(RCTD@cell_type_info$renorm[[1]]))
   originalSpatialRNA <- RCTD@originalSpatialRNA
   DOUBLET_THRESHOLD <- RCTD@config$DOUBLET_THRESHOLD
   RCTD@originalSpatialRNA <- RCTD@spatialRNA
@@ -121,9 +126,8 @@ iterOptim <- function(RCTD, doublet_mode = 'doublet', cell_types = NULL, n_iter 
     message('fitting gene profiles')
     initialSol <- RCTD@de_results$gene_fits$mean_val
     RCTD <- run.CSIDE(RCTD, X, barcodes, cell_types, doublet_mode = (doublet_mode == 'doublet'), cell_type_threshold = 0, gene_threshold = -1,
-                      sigma_gene = F, test_genes_sig = F, params_to_test = 1, logs = F, initialSol = initialSol[, cell_types])
+                      sigma_gene = F, test_genes_sig = F, params_to_test = 1, initialSol = initialSol[, cell_types])
     info <- as.data.frame(exp(RCTD@de_results$gene_fits$mean_val))
-    RCTD@cell_type_info$info[[1]][, cell_types] <- info 
     RCTD@cell_type_info$renorm[[1]][, cell_types] <- info 
 
     message('fitting cell types')
@@ -139,6 +143,7 @@ iterOptim <- function(RCTD, doublet_mode = 'doublet', cell_types = NULL, n_iter 
     if (return_list)
       RCTD_list[[i+1]] <- RCTD
     RCTD_prev <- RCTD
+    saveRDS(RCTD_prev, "../tmp.rds")
   }
 
   if (doublet_mode == 'doublet') {

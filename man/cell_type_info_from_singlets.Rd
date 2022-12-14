@@ -4,12 +4,21 @@
 \alias{cell_type_info_from_singlets}
 \title{Generates \code{cell_type_info} from singlet means on a fitted \code{\linkS4class{RCTD}} object from the original \code{\linkS4class{SpatialRNA}} object}
 \usage{
-cell_type_info_from_singlets(RCTD, cell_types = NULL)
+cell_type_info_from_singlets(
+  RCTD,
+  cell_types = NULL,
+  gene_list = NULL,
+  cell_type_threshold = 25
+)
 }
 \arguments{
 \item{RCTD}{a \code{\linkS4class{RCTD}} object}
 
 \item{cell_types}{the cell types used for CSIDE. If null, all cell types in \code{cell_type_info} will be chosen.}
+
+\item{gene_list}{the genes to compute expression for. If null, all genes will be included.}
+
+\item{cell_type_threshold}{(Default 10) minimum number of singlets required per cell type.}
 }
 \value{
 \code{cell_type_info}, which is ready to run the \code{\link{create.RCTD.unsupervised}} function

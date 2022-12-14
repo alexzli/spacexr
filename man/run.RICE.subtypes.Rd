@@ -4,7 +4,7 @@
 \alias{run.RICE.subtypes}
 \title{Runs the subtype pipeline on a \code{\linkS4class{RCTD}} object}
 \usage{
-run.RICE.subtypes(RCTD, n_iter = 50, MIN_CHANGE = 0.001)
+run.RICE.subtypes(RCTD, n_iter = 50, MIN_CHANGE = 0.001, return_list = T)
 }
 \arguments{
 \item{RCTD}{an \code{\linkS4class{RCTD}} object created using the \code{\link{create.RCTD}} function.}

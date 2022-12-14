@@ -6,9 +6,9 @@
 \usage{
 run.CSIDE.replicates(
   RCTD.replicates,
+  cell_types,
   explanatory.variable.replicates = NULL,
   X.replicates = NULL,
-  cell_types,
   cell_type_threshold = 125,
   gene_threshold = 5e-05,
   doublet_mode = T,
@@ -33,15 +33,15 @@ run.CSIDE.replicates(
 \arguments{
 \item{RCTD.replicates}{an \code{\linkS4class{RCTD.replicates}} object with annotated cell types e.g. from the \code{\link{run.RCTD.replicates}} function.}
 
+\item{cell_types}{the cell types used for CSIDE. Each cell type must occur
+at least `cell_type_threshold`, as aggregated by \code{\link{aggregate_cell_types}}}
+
 \item{explanatory.variable.replicates}{(only used for de_mode = single) a list of the named numeric vectors representing for each replicate the explanatory variable used for explaining differential expression in CSIDE.
 Names of the vectors are the \code{\linkS4class{SpatialRNA}} pixel names, and values should be standardized between 0 and 1.}
 
 \item{X.replicates}{(only used for de_mode = general) a list for each replicate of matrices containing the covariates for running CSIDE. The rownames represent pixel names and
 should be a subset of the pixels in the \code{\linkS4class{SpatialRNA}} object. The columns each represent a covariate for
 explaining differential expression and need to be linearly independent.}
-
-\item{cell_types}{the cell types used for CSIDE. Each cell type must occur
-at least `cell_type_threshold`, as aggregated by \code{\link{aggregate_cell_types}}}
 
 \item{cell_type_threshold}{(default 125) min occurence of number of cells for each cell type to be used, as aggregated by \code{\link{aggregate_cell_types}}}
 

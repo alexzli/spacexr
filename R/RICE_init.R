@@ -30,11 +30,10 @@ initialize.clusters <- function(puck, resolution = 0.7, SCT = T) {
 #' @param RCTD a \code{\linkS4class{RCTD}} object with cell types fitted
 #' @param cell_types cell supertypes to find subtypes for
 #' @param resolution (Default 0.7) the resolution to be used during Seurat clustering for subtype initialization
-#' @param SCT whether or not to use \code{SCTransform} for count normalization
 #' @param gene_list gene list to be used for subtype mode. If null, uses highly expressed supertype genes
 #' @return an \code{\linkS4class{RCTD}} object, which is ready to run the \code{\link{run.unsupervised}} function on subtype mode
 #' @export
-initialize.subtypes <- function(RCTD, cell_types, resolution = 0.7, SCT = T, gene_list = NULL) {
+initialize.subtypes <- function(RCTD, cell_types, resolution = 0.7, gene_list = NULL) {
   message('initialize.subtypes: gathering results')
   if (RCTD@config$RCTDmode == 'doublet') {
     weights <- weights_from_results(RCTD)
@@ -47,7 +46,7 @@ initialize.subtypes <- function(RCTD, cell_types, resolution = 0.7, SCT = T, gen
   singlet_barcodes <- barcodes[rowSums(as.matrix(weights[, cell_types])) == 1]
   singlet_puck <- restrict_puck(RCTD@originalSpatialRNA, singlet_barcodes)
   message('initialize.subtypes: getting subtype gene expression profiles: ')
-  subtype_info <- initialize.clusters(singlet_puck, resolution = resolution, SCT = SCT)
+  subtype_info <- initialize.clusters(singlet_puck, resolution = resolution)
   subtype_info$info[[2]] <- sapply(subtype_info$info[[2]], function(x) paste0('subtype_', x))
   colnames(subtype_info$info[[1]]) <- subtype_info$info[[2]]
   message('initialize.subtypes: getting supertype gene expression profiles: ')

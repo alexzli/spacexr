@@ -6,19 +6,20 @@
 \usage{
 iterOptim(
   RCTD,
+  cell_types,
   doublet_mode = "doublet",
-  cell_types = NULL,
   n_iter = 50,
   MIN_CHANGE = 0.001,
-  initialSol = NULL
+  initialSol = NULL,
+  return_list = F
 )
 }
 \arguments{
 \item{RCTD}{an \code{\linkS4class{RCTD}} object after running the \code{\link{choose_sigma_c}} function.}
 
-\item{doublet_mode}{\code{character string}, either "doublet", "subtype", or "full" on which mode to run iterOptim. Please see above description.}
+\item{cell_types}{the cell types used for CSIDE.}
 
-\item{cell_types}{the cell types used for CSIDE. If null, all cell types in \code{cell_type_info} will be chosen.}
+\item{doublet_mode}{\code{character string}, either "doublet", "subtype", or "full" on which mode to run iterOptim. Please see above description.}
 
 \item{n_iter}{maximum number of optimization iterations}
 

@@ -4,13 +4,7 @@
 \alias{initialize.subtypes}
 \title{Creates an \code{\linkS4class{RCTD}} object ready to be run on subtype mode from a fitted \code{\linkS4class{RCTD}} object}
 \usage{
-initialize.subtypes(
-  RCTD,
-  cell_types,
-  resolution = 0.7,
-  SCT = T,
-  gene_list = NULL
-)
+initialize.subtypes(RCTD, cell_types, resolution = 0.7, gene_list = NULL)
 }
 \arguments{
 \item{RCTD}{a \code{\linkS4class{RCTD}} object with cell types fitted}
@@ -18,8 +12,6 @@ initialize.subtypes(
 \item{cell_types}{cell supertypes to find subtypes for}
 
 \item{resolution}{(Default 0.7) the resolution to be used during Seurat clustering for subtype initialization}
-
-\item{SCT}{whether or not to use \code{SCTransform} for count normalization}
 
 \item{gene_list}{gene list to be used for subtype mode. If null, uses highly expressed supertype genes}
 }

@@ -72,7 +72,7 @@ cell_type_info_from_de <- function(RCTD, cell_types = NULL, gene_list = NULL, ce
     cell_type_count <- aggregate_cell_types(RCTD, barcodes, doublet_mode = (RCTD@config$RCTDmode == "doublet"))
     cell_types <- names(which(cell_type_count >= cell_type_threshold))
   }
-  RCTD <- run.CSIDE(RCTD, X, barcodes, cell_types, doublet_mode = (RCTD@config$RCTDmode == "doublet"), 
+  RCTD <- run.CSIDE(RCTD, X, barcodes, cell_types, doublet_mode = (RCTD@config$RCTDmode == "doublet"), logs=T,
     cell_type_threshold = cell_type_threshold, gene_threshold = -1, sigma_gene = F, test_genes_sig = F, params_to_test = 1)
   cell_type_info <- list(as.data.frame(exp(RCTD@de_results$gene_fits$mean_val)), cell_types, length(cell_types))
   return(list(info = cell_type_info, renorm = cell_type_info))
@@ -99,4 +99,65 @@ cell_type_info_from_singlets <- function(RCTD, cell_types = NULL, gene_list = NU
   cell_type_info <- get_cell_type_info(RCTD@originalSpatialRNA@counts[gene_list, barcodes], cell_type_list, 
     RCTD@originalSpatialRNA@nUMI[barcodes], cell_type_names = cell_types)
   return(list(info = cell_type_info, renorm = cell_type_info))
+}
+
+#' Generates marker genes from C-SIDE means on a fitted \code{\linkS4class{RCTD}} object
+#'
+#' @param RCTD a \code{\linkS4class{RCTD}} object
+#' @param cell_types the cell types used to find marker genes. If null, all cell types in \code{RCTD@internal_vars_de$cell_types} will be chosen.
+#' @param fdr false discovery rate for marker genes.
+#' @param fc_thresh minimum \code{log_e} fold change required for a gene to be considered a marker gene.
+#' @param expr_thresh minimum expression threshold, as normalized expression (proportion out of 1, or counts per 1).
+#' @param max_sigma maximum standard error of gene expression mean.
+#' @return a dataframe of marker gene names, expressions, and p-values for each cell type
+#' @export
+get_marker_genes <- function(RCTD, cell_types = NULL, fdr = 0.05, fc_thresh = 1.25, expr_thresh = .00015, max_sigma = 1) {
+  # filter by # singlets + doublets for cell types (don't use uncertain doublets)
+  mean_val <- RCTD@de_results$gene_fits$mean_val
+  s_mat <- RCTD@de_results$gene_fits$s_mat
+  dimnames(s_mat)[[2]] <- RCTD@internal_vars_de$cell_types
+  if (is.null(cell_types))
+    cell_types <- RCTD@internal_vars_de$cell_types
+  mean_val <- mean_val[,cell_types]
+  s_mat <- s_mat[,cell_types]
+  p_mat <- matrix(nrow = dim(mean_val)[1], ncol = dim(mean_val)[2])
+  dimnames(p_mat) <- dimnames(mean_val)
+  for (gene in dimnames(mean_val)[[1]]) {
+    mean_list <- mean_val[gene,]
+    if (max(mean_list) < log(expr_thresh)) next
+    se_list <- s_mat[gene,]
+    i <- which.max(mean_list)
+    cell_type <- cell_types[i]
+    other_cell_types <- cell_types[-i]
+    zscores <- (mean_list[cell_type] - mean_list[other_cell_types] - fc_thresh) / sqrt(se_list[cell_type]^2 + pmin(max_sigma, se_list[other_cell_types])^2)
+    p_vals <- pnorm(-zscores)
+    p_mat[gene,cell_type] <- max(p_vals)
+  }
+  marker_gene_list <- vector("list", length(cell_types))
+  names(marker_gene_list) <- cell_types
+  for (cell_type in cell_types) {
+    type_gene_list <- sort(p_mat[,cell_type][!is.na(p_mat[,cell_type])])
+    n_genes <- length(type_gene_list)
+    thresh <- 1:n_genes * fdr / n_genes
+    if (sum(type_gene_list < thresh) > 0) {
+      n_sig_genes <- n_genes - match(TRUE, rev(type_gene_list < thresh)) + 1
+    } else {
+      n_sig_genes <- 0
+    }
+    marker_gene_list[[cell_type]] <- type_gene_list[0:n_sig_genes]
+    message(paste("get_marker_genes:", cell_type, "found marker genes:", n_sig_genes))
+  }
+  marker_data <- lapply(marker_gene_list, as.data.frame, stringsAsFactors = FALSE)
+  marker_data <- dplyr::bind_rows(marker_data, .id = "cell_type")
+  colnames(marker_data)[2] <- "p_value"
+  marker_data$expr <- exp(apply(mean_val[rownames(marker_data),], 1, max))
+  get_log_fc <- function(vec) {
+    i <- which.max(vec)
+    max <- vec[i]
+    other <- vec[-i]
+    return(mean(max - other))
+  }
+  marker_data$log_fc <- apply(mean_val[rownames(marker_data),], 1, get_log_fc)
+  marker_data <- marker_data[,c("cell_type", "expr", "log_fc", "p_value")]
+  return(marker_data)
 }
