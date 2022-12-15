@@ -81,7 +81,7 @@ myRCTD <- readRDS(file.path(savedir,'myRCTD_visium_full.rds'))
 barcodes <- colnames(myRCTD@spatialRNA@counts)
 weights <- myRCTD@results$weights
 norm_weights <- normalize_weights(weights)
-cell_types <- c('Denate', 'Neurogenesis','Cajal_Retzius')
+cell_types <- c('Neurogenesis','Astrocyte')
 print(head(norm_weights[,cell_types])) # observe weight values
 plot_puck_continuous(myRCTD@spatialRNA, barcodes, norm_weights[,'Denate'], ylimit = c(0,0.5), 
                      title ='plot of Dentate weights') # plot Dentate weights
@@ -119,40 +119,49 @@ myRCTD <- run.CSIDE.regions(myRCTD, region_list,cell_types = cell_types, gene_th
 saveRDS(myRCTD,file.path(savedir,'myRCTDde_visium_regions.rds'))
 ```
 
-Equivalently to using the `run.CSIDE.regions` function, those who want to have more precise control can build the design matrix directly. In this case, we use the `build.designmatrix.regions` function, which constructs the design matrix given a list of regions. After constructing the design matrix, one can use the `run.CSIDE` function to run CSIDE with this general design matrix.
+Equivalently to using the `run.CSIDE.regions` function, those who want to have more precise control can build the design matrix directly. In this case, we use the `build.designmatrix.regions` function, which constructs the design matrix given a list of regions. After constructing the design matrix, one can use the `run.CSIDE` function (with test_mode = 'categorical') to run CSIDE with this general design matrix.
 
 ```{r design matrix}
 X <- build.designmatrix.regions(myRCTD,region_list)
 print(head(X))
 barcodes <- rownames(X)
-myRCTD_identical <- run.CSIDE(myRCTD, X, barcodes, cell_types, gene_threshold = .01, doublet_mode = F,
-                        cell_type_threshold = 10, fdr = 0.25, weight_threshold = 0.1)
+myRCTD_identical <- run.CSIDE(myRCTD, X, barcodes, cell_types, test_mode = 'categorical', gene_threshold = .01, doublet_mode = F, cell_type_threshold = 10, fdr = 0.25, weight_threshold = 0.1)
 ```
 
 ## CSIDE results
 
-After running CSIDE, it is time to examine CSIDE results. We will focus on cell type Dentate. Furthermore, we will examine the original Fth1 gene.
+After running CSIDE, it is time to examine CSIDE results. We will focus on cell type Neurogenesis. Furthermore, we will examine the original Fth1 gene.
 
 ```{r CSIDE_results,  fig.width = 8, fig.height=8}
 #print results for cell type 'Dentate'
-cell_type <- 'Denate'
+cell_type <- 'Neurogenesis'
 gene <- 'Fth1'
 print(paste("following results hold for", gene))
 print("check for covergence of each cell type")
 print(myRCTD@de_results$gene_fits$con_mat[gene, ]) # did not converge (dataset was too small)
-print('estimated expression for Dentate in each region')
+print('estimated expression for Neurogenesis in each region')
 cell_type_ind <- which(cell_type == cell_types)
 print(myRCTD@de_results$gene_fits$all_vals[gene, , cell_type_ind]) 
 ```
 
 ### Load in significant genes from another dataset
 
-Unfortunately, this toy dataset did not yield any significant genes. To illustrate the results of a normal dataset, we will
-examine the `myRCTD@de_results$sig_gene_list` object from another dataset. `sig_gene_list` is a list, for each cell type, of dataframes that contain the hypothesis testing results for significant genes. In particular, notice the following columns: p_val (p value), log_fc (log-fold-change between two regions) and X1...X4 (the estimated expression within each region):
+Unfortunately, this toy dataset did not yield any significant genes, so we will examine `myRCTD@de_results$all_gene_list` (all genes) and `myRCTD@de_results$sig_gene_list` (significant genes). `sig_gene_list` is a list, for each cell type, of dataframes that contain the hypothesis testing results for significant genes. In particular, notice the following columns: 
 
-```{r load_testes}
-sig_gene_list <- readRDS(file.path(datadir,"testes_sig_gene_list.rds")) # load in counts matrix
-print(head(sig_gene_list$`2`))
+* `mean_i`: the estimated log gene expression in region i.
+* `sd_i`: the standard error of this log gene expression estimate in region i.
+* `sd_lfc`: the standard deviation of `mean_i`, across i.
+* `log_fc_best`: the log-fold-change of the most differentially-expressed significant pair of regions.
+* `sd_best`: the standard error of the log-fold-change estimate of this pair
+* `p_val_best`: the p value of the differential expression for this pair.
+* `paramindex1_best`: the parameter index for the first region in the most DE pair.
+* `paramindex2_best`: the parameter index for the second region in the most DE pair.
+
+```{r print_gene_list}
+sig_gene_list <- myRCTD@de_results$sig_gene_list
+print(sig_gene_list$Neurogenesis)
+all_gene_list <- myRCTD@de_results$all_gene_list
+print(all_gene_list$Neurogenesis)
 ```
 
 Finally, we will plot CSIDE results in the `savedir` directory!
