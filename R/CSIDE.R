@@ -16,7 +16,7 @@
 #' @param sigma_gene (default TRUE) if TRUE, fits gene specific overdispersion parameter. If FALSE, overdispersion parameter is same across all genes.
 #' @param weight_threshold (default NULL) the threshold of total normalized weights across all cell types
 #' in \code{cell_types} per pixel to be included in the model. Default 0.99 for doublet_mode or 0.8 for full_mode.
-#' @param PRECISION.THRESHOLD (default 0.01) for checking for convergence, the maximum parameter change per algorithm step
+#' @param PRECISION.THRESHOLD (default 0.05) for checking for convergence, the maximum parameter change per algorithm step
 #' @param cell_types_present cell types (a superset of `cell_types`) to be considered as occurring often enough
 #' to consider for gene expression contamination during the step filtering out marker genes of other cell types.
 #' @param fdr (default 0.01) false discovery rate for hypothesis testing
@@ -33,7 +33,7 @@
 #' @export
 run.CSIDE.single <- function(myRCTD, explanatory.variable,  cell_types = NULL, cell_type_threshold = 125,
                           gene_threshold = 5e-5, doublet_mode = T, weight_threshold = NULL,
-                          sigma_gene = T, PRECISION.THRESHOLD = 0.01, cell_types_present = NULL, fdr = .01,
+                          sigma_gene = T, PRECISION.THRESHOLD = 0.05, cell_types_present = NULL, fdr = .01,
                           test_genes_sig = T, normalize_expr = F, logs=F, log_fc_thresh = 0.4, test_error = F) {
   X2 <- build.designmatrix.single(myRCTD, explanatory.variable)
   barcodes <- rownames(X2)
@@ -69,7 +69,7 @@ run.CSIDE.single <- function(myRCTD, explanatory.variable,  cell_types = NULL, c
 #' @param sigma_gene (default TRUE) if TRUE, fits gene specific overdispersion parameter. If FALSE, overdispersion parameter is same across all genes.
 #' @param weight_threshold (default NULL) the threshold of total normalized weights across all cell types
 #' in \code{cell_types} per pixel to be included in the model. Default 0.99 for doublet_mode or 0.8 for full_mode.
-#' @param PRECISION.THRESHOLD (default 0.01) for checking for convergence, the maximum parameter change per algorithm step
+#' @param PRECISION.THRESHOLD (default 0.05) for checking for convergence, the maximum parameter change per algorithm step
 #' @param cell_types_present cell types (a superset of `cell_types`) to be considered as occuring often enough
 #' to consider for gene expression contamination during the step filtering out marker genes of other cell types.
 #' @param fdr (default 0.01) false discovery rate for hypothesis testing
@@ -85,7 +85,7 @@ run.CSIDE.single <- function(myRCTD, explanatory.variable,  cell_types = NULL, c
 run.CSIDE.nonparam <- function(myRCTD, df = 15, barcodes = NULL, cell_types = NULL,
                             cell_type_threshold = 125, gene_threshold = 5e-5, doublet_mode = T,
                             weight_threshold = NULL, sigma_gene = T,
-                            PRECISION.THRESHOLD = 0.01, cell_types_present = NULL, fdr = .01, test_genes_sig = T,
+                            PRECISION.THRESHOLD = 0.05, cell_types_present = NULL, fdr = .01, test_genes_sig = T,
                             logs=F, test_error = F) {
   X2 <- build.designmatrix.nonparam(myRCTD, barcodes = barcodes, df = df)
   region_thresh <- cell_type_threshold / 4
@@ -127,7 +127,7 @@ run.CSIDE.nonparam <- function(myRCTD, df = 15, barcodes = NULL, cell_types = NU
 #' @param sigma_gene (default TRUE) if TRUE, fits gene specific overdispersion parameter. If FALSE, overdispersion parameter is same across all genes.
 #' @param weight_threshold (default NULL) the threshold of total normalized weights across all cell types
 #' in \code{cell_types} per pixel to be included in the model. Default 0.99 for doublet_mode or 0.8 for full_mode.
-#' @param PRECISION.THRESHOLD (default 0.01) for checking for convergence, the maximum parameter change per algorithm step
+#' @param PRECISION.THRESHOLD (default 0.05) for checking for convergence, the maximum parameter change per algorithm step
 #' @param cell_types_present cell types (a superset of `cell_types`) to be considered as occuring often enough
 #' to consider for gene expression contamination during the step filtering out marker genes of other cell types.
 #' @param fdr (default 0.01) false discovery rate for hypothesis testing
@@ -144,8 +144,8 @@ run.CSIDE.nonparam <- function(myRCTD, df = 15, barcodes = NULL, cell_types = NU
 run.CSIDE.regions <- function(myRCTD, region_list, cell_types = NULL,
                            cell_type_threshold = 125, gene_threshold = 5e-5, doublet_mode = T,
                           weight_threshold = NULL, sigma_gene = T,
-                           PRECISION.THRESHOLD = 0.01, cell_types_present = NULL, fdr = 0.01, test_genes_sig = T,
-                          logs=F, log_fc_thresh = log_fc_thresh, test_error = F) {
+                           PRECISION.THRESHOLD = 0.05, cell_types_present = NULL, fdr = 0.01, test_genes_sig = T,
+                          logs=F, log_fc_thresh = 0.4, test_error = F) {
   X2 <- build.designmatrix.regions(myRCTD, region_list)
   barcodes <- rownames(X2)
   return(run.CSIDE(myRCTD, X2, barcodes, cell_types, cell_type_threshold = cell_type_threshold, gene_threshold = gene_threshold,
@@ -182,7 +182,7 @@ run.CSIDE.regions <- function(myRCTD, region_list, cell_types = NULL,
 #' in \code{cell_types} per pixel to be included in the model. Default 0.99 for doublet_mode or 0.8 for full_mode.
 #' @param test_mode (default 'individual') if 'individual', tests for DE individually for each parameter. If 'categorical', then tests for differences
 #' across multiple categorical parameters
-#' @param PRECISION.THRESHOLD (default 0.01) for checking for convergence, the maximum parameter change per algorithm step
+#' @param PRECISION.THRESHOLD (default 0.05) for checking for convergence, the maximum parameter change per algorithm step
 #' @param cell_types_present cell types (a superset of `cell_types`) to be considered as occuring often enough
 #' to consider for gene expression contamination during the step filtering out marker genes of other cell types.
 #' @param fdr (default 0.01) false discovery rate for hypothesis testing
@@ -200,7 +200,7 @@ run.CSIDE.regions <- function(myRCTD, region_list, cell_types = NULL,
 #' @export
 run.CSIDE <- function(myRCTD, X, barcodes, cell_types = NULL, gene_threshold = 5e-5, cell_type_threshold = 125,
                           doublet_mode = T, test_mode = 'individual', weight_threshold = NULL,
-                          sigma_gene = T, PRECISION.THRESHOLD = 0.01, cell_types_present = NULL,
+                          sigma_gene = T, PRECISION.THRESHOLD = 0.05, cell_types_present = NULL,
                           test_genes_sig = T, fdr = .01, cell_type_specific = NULL,
                       params_to_test = NULL, normalize_expr = F, logs=F, log_fc_thresh = 0.4,
                       cell_type_filter = NULL, test_error = F, initialSol = NULL) {
@@ -249,7 +249,7 @@ run.CSIDE <- function(myRCTD, X, barcodes, cell_types = NULL, gene_threshold = 5
 #' in \code{cell_types} per pixel to be included in the model. Default 0.99 for doublet_mode or 0.8 for full_mode.
 #' @param test_mode (default 'individual') if 'individual', tests for DE individually for each parameter. If 'categorical', then tests for differences
 #' across multiple categorical parameters
-#' @param PRECISION.THRESHOLD (default 0.01) for checking for convergence, the maximum parameter change per algorithm step
+#' @param PRECISION.THRESHOLD (default 0.05) for checking for convergence, the maximum parameter change per algorithm step
 #' @param cell_types_present cell types (a superset of `cell_types`) to be considered as occuring often enough
 #' to consider for gene expression contamination during the step filtering out marker genes of other cell types.
 #' @param fdr (default 0.01) false discovery rate for hypothesis testing
@@ -268,9 +268,9 @@ run.CSIDE <- function(myRCTD, X, barcodes, cell_types = NULL, gene_threshold = 5
 #' @export
 run.CSIDE.general <- function(myRCTD, X1, X2, barcodes, cell_types = NULL, gene_threshold = 5e-5, cell_type_threshold = 125,
                           doublet_mode = T, test_mode = 'individual', weight_threshold = NULL,
-                          sigma_gene = T, PRECISION.THRESHOLD = 0.01, cell_types_present = NULL,
+                          sigma_gene = T, PRECISION.THRESHOLD = 0.05, cell_types_present = NULL,
                           test_genes_sig = T, fdr = .01, params_to_test = NULL, normalize_expr = F,
-                          logs=F, cell_type_filter = NULL, log_fc_thresh = 0.4, test_error = FALSE) {
+                          logs=F, cell_type_filter = NULL, log_fc_thresh = 0.4, test_error = FALSE, initialSol = initialSol) {
   if(gene_threshold == .01 || fdr == 0.25 || cell_type_threshold == 10 ||
      (!is.null(weight_threshold) && weight_threshold == 0.1))
     warning('run.CSIDE.general: some parameters are set to the CSIDE vignette values, which are intended for testing but not proper execution. For more accurate results, consider using the default parameters to this function.')
@@ -339,10 +339,14 @@ run.CSIDE.general <- function(myRCTD, X1, X2, barcodes, cell_types = NULL, gene_
   if(test_error)
     return(myRCTD)
   barcodes <- res$barcodes; my_beta <- res$my_beta
-  set_likelihood_vars(myRCTD@internal_vars$Q_mat, myRCTD@internal_vars$X_vals)
-  if(sigma_gene)
-    set_global_Q_all()
   sigma_init <- as.character(100*myRCTD@internal_vars$sigma)
+  if(sigma_gene) {
+    set_global_Q_all()
+    sigma_set <- sigma_init
+    set_likelihood_vars(Q_mat_all[[sigma_init]], X_vals, sigma = sigma_set)
+  } else {
+    set_likelihood_vars_sigma(sigma_init)
+  }
   gene_fits <- get_de_gene_fits(X1[barcodes, , drop = FALSE],X2[barcodes, , drop = FALSE],my_beta, nUMI[barcodes], gene_list_tot,
                                 cell_types, restrict_puck(puck, barcodes), barcodes, sigma_init,
                                 test_mode, numCores = myRCTD@config$max_cores, sigma_gene = sigma_gene, initialSol = initialSol,
@@ -463,26 +467,32 @@ find_sig_genes_categorical <- function(cell_type, cell_types, gene_fits, gene_li
     i2_vec[gene] <- best_i2
   }
   gene_list_sig <- fdr_sig_genes(gene_list_type, p_val_sig_pair, fdr)
-  sig_genes <- data.frame(sd_lfc_vec[gene_list_type], i1_vec[gene_list_type], i2_vec[gene_list_type],
+  all_genes <- data.frame(sd_lfc_vec[gene_list_type], i1_vec[gene_list_type], i2_vec[gene_list_type],
                           sd_vec[gene_list_type], p_val_sig_pair[gene_list_type],
                           log_fc_best_pair[gene_list_type])
-  rownames(sig_genes) <- gene_list_type
-  custom_names <- c('sd_lfc','sd_best','p_val_best','log_fc_best', 'paramindex1_best', 'paramindex2_best')
-  colnames(sig_genes) <- custom_names
-  all_genes <- sig_genes
-  sig_genes <- sig_genes[abs(sig_genes$p_val < p_thresh) & abs(sig_genes$log_fc) >= log_fc_thresh, ]
-  if(length(gene_list_sig) > 1)
-    sig_genes <- data.frame(sig_genes, gene_fits$all_vals[rownames(sig_genes),params_to_test,cell_ind]) # add on the means
-  else {
-    if(length(gene_list_sig) == 1) {
-      sig_genes <- data.frame(t(unlist((c(sig_genes, gene_fits$all_vals[rownames(sig_genes),params_to_test,cell_ind],
-                                          gene_fits$s_mat[rownames(sig_genes),s_mat_ind[params_to_test]])))))
-      rownames(sig_genes) <- gene_list_sig
-      if(length(sig_genes) > 0)
-        colnames(sig_genes)[(length(custom_names)+1):length(sig_genes)] <-
-        c(lapply(params_to_test,function(x) paste('mean_',x)), lapply(params_to_test,function(x) paste('sd_',x)))
+  rownames(all_genes) <- gene_list_type
+  custom_names <- c('sd_lfc','paramindex1_best', 'paramindex2_best', 'sd_best','p_val_best','log_fc_best')
+  colnames(all_genes) <- custom_names
+  if(length(gene_list_type) > 1) {
+    all_genes <- data.frame(all_genes, gene_fits$all_vals[rownames(all_genes),params_to_test,cell_ind],
+                            gene_fits$s_mat[rownames(all_genes),s_mat_ind[params_to_test]]) # add on the means
+    colnames(all_genes)[(length(custom_names)+1):length(all_genes)] <-
+      c(lapply(params_to_test,function(x) paste0('mean_',x)), lapply(params_to_test,function(x) paste0('sd_',x)))
+  } else {
+    if(length(gene_list_type) == 1) {
+      all_genes <- data.frame(t(unlist((c(all_genes, gene_fits$all_vals[rownames(all_genes),params_to_test,cell_ind],
+                                          gene_fits$s_mat[rownames(all_genes),s_mat_ind[params_to_test]])))))
+      rownames(all_genes) <- gene_list_type
+      colnames(all_genes)[(length(custom_names)+1):length(all_genes)] <-
+        c(lapply(params_to_test,function(x) paste0('mean_',x)), lapply(params_to_test,function(x) paste0('sd_',x)))
     } else
-      sig_genes <- list()
+      all_genes <- list()
+  }
+  if(length(gene_list_sig) > 0) {
+    sig_genes <- all_genes[gene_list_sig, ]
+    sig_genes <- sig_genes[abs(sig_genes$p_val < p_thresh) & abs(sig_genes$log_fc) >= log_fc_thresh, ]
+  } else {
+    sig_genes <- list()
   }
   return(list(sig_genes = sig_genes, all_genes = all_genes))
 }
@@ -494,6 +504,7 @@ find_sig_genes_individual <- function(cell_type, cell_types, gene_fits, gene_lis
                 ' has not converged on any genes. Consider removing this cell type from the model using the cell_types option.'))
   ct_ind <- which(cell_types == cell_type)
   I_ind = dim(X2)[2]*(ct_ind - 1) + params_to_test
+  I_ind_intercept = dim(X2)[2]*(ct_ind - 1) + 1
   if(normalize_expr) {
     log_fc <- gene_fits$mean_val_cor[[cell_type]][gene_list_type]
   } else {
@@ -549,20 +560,28 @@ find_sig_genes_individual <- function(cell_type, cell_types, gene_fits, gene_lis
     best_ind <- rep(params_to_test, length(gene_list_type))
     names(best_ind) <- gene_list_type
   }
-  sig_genes <- data.frame(z_score[gene_list_sig], log_fc[gene_list_sig], s_vec[gene_list_sig], best_ind[gene_list_sig])
-  names(sig_genes) <- c('Z_score','log_fc', 'se', 'paramindex_best')
-  sig_genes$conv <- gene_fits$con_mat[gene_list_sig, cell_type]
-  sig_genes$p_val <- p_val[gene_list_sig]
-  sig_genes <- sig_genes[abs(sig_genes$p_val < p_thresh) & abs(sig_genes$log_fc) >= log_fc_thresh, ]
   all_genes <- data.frame(z_score[gene_list_type], log_fc[gene_list_type], s_vec[gene_list_type], best_ind[gene_list_type])
   names(all_genes) <- c('Z_score','log_fc', 'se', 'paramindex_best')
   all_genes$conv <- gene_fits$con_mat[gene_list_type, cell_type]
   all_genes$p_val <- p_val[gene_list_type]
+  if(length(params_to_test) == 1 & !any(X2[,1] != 1)) {
+    mean_0 <- gene_fits$all_vals[gene_list_type, 1, ct_ind]
+    mean_1 <- mean_0 + log_fc
+    sd_0 <- gene_fits$s_mat[gene_list_type,I_ind_intercept]
+    sd_1 <- s_vec^2 - sd_0^2
+    sd_1[sd_1 < 0] <- 100
+    sd_1 <- sqrt(sd_1)
+    all_genes$mean_0 <- mean_0
+    all_genes$mean_1 <- mean_1
+    all_genes$sd_0 <- sd_0
+    all_genes$sd_1 <- sd_1
+  }
+  sig_genes <- all_genes[gene_list_sig, ]
   return(list(sig_genes = sig_genes, all_genes = all_genes))
 }
 
 get_de_gene_fits <- function(X1,X2,my_beta, nUMI, gene_list, cell_types, puck, barcodes, sigma_init, test_mode,
-                             numCores = 4, sigma_gene = T, MIN_CHANGE = 0.001, PRECISION.THRESHOLD = 0.01, params_to_test = 2, initialSol = NULL, logs=F) {
+                             numCores = 4, sigma_gene = T, MIN_CHANGE = 0.001, PRECISION.THRESHOLD = 0.05, params_to_test = 2, initialSol = NULL, logs=F) {
   results_list <- fit_de_genes(X1,X2,my_beta, nUMI, gene_list, puck, barcodes,
                                sigma_init, test_mode, numCores = numCores,
                                sigma_gene = sigma_gene, initialSol = initialSol,
@@ -620,27 +639,28 @@ get_de_gene_fits <- function(X1,X2,my_beta, nUMI, gene_list, cell_types, puck, b
               precision_mat = precision_mat, sigma_g = sigma_g, con_mat = con_mat, con_all = con_all, error_mat = error_mat))
 }
 
-fit_de_genes <- function(X1,X2,my_beta, nUMI, gene_list, puck, barcodes, sigma_init, test_mode, numCores = 4, MIN_CHANGE = 1e-3, sigma_gene = T, PRECISION.THRESHOLD = 0.01, initialSol = NULL,
+fit_de_genes <- function(X1,X2,my_beta, nUMI, gene_list, puck, barcodes, sigma_init, test_mode, numCores = 4, MIN_CHANGE = 1e-3, sigma_gene = T, PRECISION.THRESHOLD = 0.05, initialSol = NULL,
                          logs=F) {
   results_list <- list()
   if(numCores == 1) {
     for(i in 1:length(gene_list)) {
       message(i)
       gene <- gene_list[i]
+      print(gene)
       Y <- puck@counts[gene, barcodes]
-      alpha2 <- NULL
+      alpha2_init <- NULL
       if (!is.null(initialSol))
-        alpha2 <- t(as.matrix(initialSol[i,]))
-      results_list[[i]] <- estimate_gene_wrapper(Y,X1,X2,my_beta, nUMI, sigma_init, test_mode, verbose = F, n.iter = 200, MIN_CHANGE = MIN_CHANGE, sigma_gene = sigma_gene, PRECISION.THRESHOLD = PRECISION.THRESHOLD, alpha2 = alpha2)
+        alpha2_init <- t(as.matrix(initialSol[i,]))
+      results_list[[i]] <- estimate_gene_wrapper(Y,X1,X2,my_beta, nUMI, sigma_init, test_mode, verbose = F, n.iter = 200, MIN_CHANGE = MIN_CHANGE, sigma_gene = sigma_gene, PRECISION.THRESHOLD = PRECISION.THRESHOLD, alpha2_init = alpha2_init)
     }
   } else {
     cl <- parallel::makeCluster(numCores,setup_strategy = "sequential",outfile="") #makeForkCluster
     doParallel::registerDoParallel(cl)
     environ = c('estimate_effects_trust', 'solveIRWLS.effects_trust', 'Q_mat', 'K_val','X_vals',
                 'calc_log_l_vec', 'calc_Q_k','get_d1_d2', 'calc_Q_all','psd','construct_hess_fast',
-                'choose_sigma_gene', 'estimate_gene_wrapper', 'check_converged_vec')
+                'choose_sigma_gene', 'estimate_gene_wrapper', 'check_converged_vec', 'calc_log_l_vec_fast')
     if(sigma_gene)
-      environ <- c(environ, 'Q_mat_all')
+      environ <- c(environ, 'Q_mat_all', 'SQ_mat_all')
     if (logs) {
       out_file = "logs/de_log.txt"
       if(!dir.exists('logs'))
@@ -648,22 +668,24 @@ fit_de_genes <- function(X1,X2,my_beta, nUMI, gene_list, puck, barcodes, sigma_i
       if(file.exists(out_file))
         file.remove(out_file)
     }
-    results_list <- foreach::foreach(i = 1:length(gene_list), .packages = c("quadprog", "spacexr"), .export = environ) %dopar% {
+    results_list <- foreach::foreach(i = 1:length(gene_list), .packages = c("quadprog", "spacexr", "Rfast"), .export = environ) %dopar% {
       if (logs) {
         if(i %% 1 == 0) { ##10
           cat(paste0("Testing sample: ",i," gene ", gene_list[i],"\n"), file=out_file, append=TRUE)
         }
       }
       assign("Q_mat",Q_mat, envir = globalenv()); assign("X_vals",X_vals, envir = globalenv())
-      assign("K_val",K_val, envir = globalenv());
-      if(sigma_gene)
+      assign("K_val",K_val, envir = globalenv()); assign("SQ_mat",SQ_mat, envir = globalenv());
+      if(sigma_gene) {
         assign("Q_mat_all",Q_mat_all, envir = globalenv());
+        assign("SQ_mat_all",SQ_mat_all, envir = globalenv());
+      }
       gene <- gene_list[i]
       Y <- puck@counts[gene, barcodes]
       alpha2 <- NULL
       if (!is.null(initialSol))
         alpha2 <- t(as.matrix(initialSol[i,]))
-      res <- estimate_gene_wrapper(Y,X1,X2,my_beta, nUMI, sigma_init, test_mode, verbose = F, n.iter = 200, MIN_CHANGE = MIN_CHANGE, sigma_gene = sigma_gene, alpha2 = alpha2)
+      res <- estimate_gene_wrapper(Y,X1,X2,my_beta, nUMI, sigma_init, test_mode, verbose = F, n.iter = 200, MIN_CHANGE = MIN_CHANGE, sigma_gene = sigma_gene, alpha2_init = alpha2_init)
     }
     parallel::stopCluster(cl)
   }
